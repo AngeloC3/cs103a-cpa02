@@ -1,4 +1,6 @@
+# Additions
 startup.sh
+.DS_Store
 
 # Logs
 logs
