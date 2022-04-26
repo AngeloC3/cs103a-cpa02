@@ -206,13 +206,13 @@ app.get('/favorites/add/:songId', isLoggedIn,
    ************************ */
 // this route loads in the courses into the Course collection
 // or updates the courses if it is not a new collection
-app.get('/upsertDB',
-  async (req,res,next) => {
-    upsert()
-    const num = await Course.find({}).count();
-    res.send("data uploaded: "+num)
-  }
-)
+// app.get('/upsertDB',
+//   async (req,res,next) => {
+//     upsert()
+//     const num = await Course.find({}).count();
+//     res.send("data uploaded: "+num)
+//   }
+// )
 
 // here we catch 404 errors and forward to error handler
 app.use(function(req, res, next) {
