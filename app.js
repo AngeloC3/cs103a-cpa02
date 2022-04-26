@@ -231,9 +231,9 @@ app.use(function(err, req, res, next) {
 });
 
 // runs upsert on startUp
-app.listen(() => {
-  upsert();
-});
+// app.listen(() => {
+//   upsert();
+// });
 
 // *********************************************************** //
 //  Starting up the server!
