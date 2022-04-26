@@ -8,4 +8,4 @@ var favoritesSchema = Schema( {
   songId: ObjectId,
 } );
 
-module.exports = mongoose.model( 'Schedule', favoritesSchema );
+module.exports = mongoose.model( 'Favorites', favoritesSchema );

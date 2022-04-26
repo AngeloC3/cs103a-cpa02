@@ -118,8 +118,8 @@ app.get("/about", (req, res, next) => {
   res.render("about");
 });
 
-app.get("/songs", (req, res, next) => {
-  res.locals.songs = songs;
+app.get("/songs", async (req, res, next) => {
+  res.locals.songs = await Song.find({});
   res.render("songList");
 });
 
@@ -154,11 +154,11 @@ app.post('/songs/byGenre',
 )
 
 app.get('/favorites', isLoggedIn,
-  // show the current user's schedule
+  // show the current user's favorites
   async (req,res,next) => {
     try{
       const userId = res.locals.user._id;
-      const songIds = (await Favorites.find({userId})).map(x => x.songId)
+      const songIds = (await Favorites.find({userId})).map(x => x.songId._id)
       res.locals.songs = await Song.find({_id:{$in: songIds}})
       res.locals.areFavorites = true
       res.render('songList')
@@ -169,7 +169,7 @@ app.get('/favorites', isLoggedIn,
 )
 
 app.get('/favorites/remove/:songId', isLoggedIn,
-  // remove a course from the user's schedule
+  // remove a song from the user's favorites
   async (req,res,next) => {
     try {
       await Favorites.remove(
@@ -184,7 +184,7 @@ app.get('/favorites/remove/:songId', isLoggedIn,
 )
 
 app.get('/favorites/add/:songId', isLoggedIn,
-  // add a course to the user's schedule
+  // add a song to the user's favorites
   async (req,res,next) => {
     try {
       const songId = req.params.songId
