@@ -5,12 +5,13 @@ const ObjectId = Schema.Types.ObjectId;
 const Mixed = Schema.Types.Mixed;
 
 var songSchema = Schema( {
-    artist: String,
-    featuredArtists: [String],
-    name: String,
-    length: Number,
+    artists: [String],
+    artistStr: String,
+    title: String,
+    popularity: Number,
     album: String,
-    favorited: Boolean,
+    genres: [String],
+    genreStr: String,
 } );
 
 module.exports = mongoose.model( 'Song', songSchema );

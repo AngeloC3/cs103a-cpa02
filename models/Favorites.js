@@ -3,9 +3,9 @@ const mongoose = require( 'mongoose' );
 const Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 
-var scheduleSchema = Schema( {
+var favoritesSchema = Schema( {
   userId: ObjectId,
-  courseId: ObjectId,
+  songId: ObjectId,
 } );
 
-module.exports = mongoose.model( 'Schedule', scheduleSchema );
+module.exports = mongoose.model( 'Schedule', favoritesSchema );

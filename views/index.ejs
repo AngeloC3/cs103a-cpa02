@@ -8,3 +8,28 @@
     users search through their database of songs and filter them easily.
     This code uses a very small song dataset (29 songs) as a showcase.
 </p>
+
+<% if (true || loggedIn) {%>  
+    <form method="post" action="/songs/byTitle">
+        Show songs with your input in the title: 
+          <input type="text" name="title" 
+                 placeholder="e.g. Bad Habits">
+        <input type="submit">
+    </form>
+    <br>
+    <form method="post" action="/songs/byArtist">
+        Show songs with the following artist: 
+        <input type="text" name="artist" 
+               placeholder="e.g. Maroon 5">
+        <input type="submit">
+    </form>
+    <br>
+    <form method="post" action="/songs/byGenre">
+        Show songs with the following genre: 
+        <input type="text" name="genre" 
+               placeholder="e.g. Pop">
+        <input type="submit">
+    </form>
+    <br>
+    <a href="/favorites">Show favorites</a>
+<% } %>

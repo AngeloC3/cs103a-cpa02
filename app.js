@@ -19,12 +19,12 @@ const axios = require("axios")
 //  Loading models
 // *********************************************************** //
 const Song = require('./models/Song')
+const Favorites = require('./models/Favorites')
 
 // *********************************************************** //
 //  Loading JSON datasets
 // *********************************************************** //
 const songs = require('./public/data/songData.json')
-// ADD CODE HERE
 
 
 // *********************************************************** //
@@ -33,9 +33,8 @@ const songs = require('./public/data/songData.json')
 
 const mongoose = require( 'mongoose' );
 
-//const mongodb_URI = process.env.mongodb_URI
-const mongodb_URI = 'mongodb://localhost:27017/cs103a_cpa02_angelo'
-//const mongodb_URI = 'mongodb+srv://cs_sj:BrandeisSpr22@cluster0.kgugl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+const mongodb_URI = process.env.mongodb_URI
+//const mongodb_URI = 'mongodb://localhost:27017/cs103a_cpa02_angelo'
 
 mongoose.connect( mongodb_URI, { useNewUrlParser: true, useUnifiedTopology: true } );
 // fix deprecation warnings
@@ -119,28 +118,101 @@ app.get("/about", (req, res, next) => {
   res.render("about");
 });
 
+app.get("/songs", (req, res, next) => {
+  res.locals.songs = songs;
+  res.render("songList");
+});
 
+app.post('/songs/byTitle',
+  // show list of courses in a given subject
+  async (req,res,next) => {
+    const userTitle = req.body.title;
+    const filtered_songs = await Song.find({title: new RegExp(userTitle, 'i')})   
+    res.locals.songs = filtered_songs
+    res.render('songList')
+  }
+)
+
+app.post('/songs/byArtist',
+  // show list of courses in a given subject
+  async (req,res,next) => {
+    const userArtist = req.body.artist;
+    const filtered_songs = await Song.find({artists: userArtist})   
+    res.locals.songs = filtered_songs
+    res.render('songList')
+  }
+)
+
+app.post('/songs/byGenre',
+  // show list of courses in a given subject
+  async (req,res,next) => {
+    const userGenre = req.body.genre;
+    const filtered_songs = await Song.find({genres: userGenre})   
+    res.locals.songs = filtered_songs
+    res.render('songList')
+  }
+)
+
+app.get('/favorites', isLoggedIn,
+  // show the current user's schedule
+  async (req,res,next) => {
+    try{
+      const userId = res.locals.user._id;
+      const songIds = (await Favorites.find({userId})).map(x => x.songId)
+      res.locals.songs = await Song.find({_id:{$in: songIds}})
+      res.locals.areFavorites = true
+      res.render('songList')
+    } catch(e){
+      next(e)
+    }
+  }
+)
+
+app.get('/favorites/remove/:songId', isLoggedIn,
+  // remove a course from the user's schedule
+  async (req,res,next) => {
+    try {
+      await Favorites.remove(
+                {userId:res.locals.user._id,
+                 songId:req.params.songId})
+      res.redirect('/favorites')
+
+    } catch(e){
+      next(e)
+    }
+  }
+)
+
+app.get('/favorites/add/:songId', isLoggedIn,
+  // add a course to the user's schedule
+  async (req,res,next) => {
+    try {
+      const songId = req.params.songId
+      const userId = res.locals.user._id
+      // check to make sure it's not already loaded
+      const lookup = await Favorites.find({songId,userId})
+      if (lookup.length==0){
+        const favorites = new Favorites({songId,userId})
+        await favorites.save()
+      }
+      res.redirect('/favorites')
+    } catch(e){
+      next(e)
+    }
+  })
 
 /* ************************
   Loading (or reloading) the data into a collection
    ************************ */
 // this route loads in the courses into the Course collection
 // or updates the courses if it is not a new collection
-// guide purposes
-// app.get('/upsertDB',
-//   async (req,res,next) => {
-//     //await Course.deleteMany({})
-//     for (course of courses){
-//       const {subject,coursenum,section,term}=course;
-//       const num = getNum(coursenum);
-//       course.num=num
-//       course.suffix = coursenum.slice(num.length)
-//       await Course.findOneAndUpdate({subject,coursenum,section,term},course,{upsert:true})
-//     }
-//     const num = await Course.find({}).count();
-//     res.send("data uploaded: "+num)
-//   }
-// )
+app.get('/upsertDB',
+  async (req,res,next) => {
+    upsert()
+    const num = await Course.find({}).count();
+    res.send("data uploaded: "+num)
+  }
+)
 
 // here we catch 404 errors and forward to error handler
 app.use(function(req, res, next) {
@@ -158,17 +230,23 @@ app.use(function(err, req, res, next) {
   res.render("error");
 });
 
+// runs upsert on startUp
+app.listen(() => {
+  upsert();
+});
 
 // *********************************************************** //
 //  Starting up the server!
 // *********************************************************** //
 //Here we set the port to use between 1024 and 65535  (2^16-1)
-const port = "5000";
+const port = process.env.PORT || "5000";
+console.log("Connecting on port " + port);
 app.set("port", port);
 
 // and now we startup the server listening on that port
 const http = require("http");
 const { reset } = require("nodemon");
+const { rmSync } = require("fs");
 const server = http.createServer(app);
 
 server.listen(port);
@@ -199,6 +277,42 @@ function onError(error) {
     default:
       throw error;
   }
+}
+
+function listToString(list){
+  if (list == null || list.length == 0){
+    return "None"
+  }
+  if (list.length == 1){
+    return list[0]
+  }
+  if (list.length == 2){
+    return list[0] + " and " + list[1]
+  }
+  s = ""
+  for (let i = 0, n = list.length; i < n; i++){
+    if (i == n-1){
+      s += ", and "
+    }
+    else if (i != 0){
+      s += ", "
+    }
+    s += list[i]
+  }
+  return s
+}
+
+async function upsert(){
+  await Song.deleteMany({})
+    for (song of songs){
+      const {artists,title,album,genres}=song;
+      const artistStr = listToString(artists)
+      song.artistStr = artistStr
+      const genreStr = listToString(genres)
+      song.genreStr = genreStr
+      await Song.findOneAndUpdate({artists,title,album,genres},song,{upsert:true})
+    }
+    console.log("data uploaded: "+ songs.length)
 }
 
 server.on("error", onError);
