@@ -29,3 +29,4 @@ and start the project with
 ``` bash
 nodemon
 ```
+Finally go to http://localhost:5000/ 
